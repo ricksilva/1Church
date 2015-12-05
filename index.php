@@ -1,91 +1,77 @@
-<?php
-error_reporting(E_ALL);
-?>
+<!-- ?php
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL & ~E_NOTICE);
+? -->
 <html>
-<head>
-  <title>1 Church Connect</title>
-  <link rel="apple-touch-icon" sizes="57x57" href="favicons/apple-touch-icon-57x57.png">
-  <link rel="apple-touch-icon" sizes="60x60" href="favicons/apple-touch-icon-60x60.png">
-  <link rel="apple-touch-icon" sizes="72x72" href="favicons/apple-touch-icon-72x72.png">
-  <link rel="apple-touch-icon" sizes="76x76" href="favicons/apple-touch-icon-76x76.png">
-  <link rel="apple-touch-icon" sizes="114x114" href="favicons/apple-touch-icon-114x114.png">
-  <link rel="apple-touch-icon" sizes="120x120" href="favicons/apple-touch-icon-120x120.png">
-  <link rel="apple-touch-icon" sizes="144x144" href="favicons/apple-touch-icon-144x144.png">
-  <link rel="apple-touch-icon" sizes="152x152" href="favicons/apple-touch-icon-152x152.png">
-  <link rel="apple-touch-icon" sizes="180x180" href="favicons/apple-touch-icon-180x180.png">
-  <link rel="icon" type="image/png" href="favicons/favicon-32x32.png" sizes="32x32">
-  <link rel="icon" type="image/png" href="favicons/favicon-194x194.png" sizes="194x194">
-  <link rel="icon" type="image/png" href="favicons/favicon-96x96.png" sizes="96x96">
-  <link rel="icon" type="image/png" href="favicons/android-chrome-192x192.png" sizes="192x192">
-  <link rel="icon" type="image/png" href="favicons/favicon-16x16.png" sizes="16x16">
-  <link rel="manifest" href="favicons/manifest.json">
-  <link rel="shortcut icon" href="favicons/favicon.ico">
-  <meta name="msapplication-TileColor" content="#603cba">
-  <meta name="msapplication-TileImage" content="favicons/mstile-144x144.png">
-  <meta name="msapplication-config" content="favicons/browserconfig.xml">
-  <meta name="theme-color" content="#ffffff">
-  <link rel="stylesheet" href="css/bootstrap.css">
-  <link rel="stylesheet" href="fonts/font-awesome-4.3.0/css/font-awesome.min.css">
-  <link rel="stylesheet" href="css/all.css">
-  <link href='http://fonts.googleapis.com/css?family=Montserrat:400,700|Source+Sans+Pro:400,700,400italic,700italic' rel='stylesheet' type='text/css'>
-</head>
-<body>
-  			<div class="container">
-  				<nav id="nav">
-  					<div class="nav-drop">
-  						<ul>
-                <li><a href="/index.php?e=F">Family</a></li>
-                <li><a href="/index.php?e=M">Missions</a></li>
-                <li><a href="/index.php?e=I">Finance</a></li>
-                <li><a href="/index.php?e=K">Kids</a></li>
-                <li><a href="/index.php?e=E">Events</a></li>
-                <li><a href="/index.php?e=G">Groups</a></li>
-  						</ul>
-            </div>  <!-- end of nav-drop -->
-          </nav>
-        </div> <!-- end of logo -->
-      </div> <!-- end of container -->
-    </div> <!-- end of first wrapper -->
-
-  		<div class="container">
-  			<div class="text-block">
-  				<div class="heading-holder">
-  					<h1>1 Church Connect</h1>
-  				</div> <!-- end of heading-holder -->
-  				<p class="tagline">Connecting God's One Church</p>
-  			</div> <!-- end of text-block -->
-  		</div>  <!-- end of container -->
-
-<div id = "access">
 <?php
-$sqldyn = "";
-if (isset($_GET['e'])) {
-  $sqldyn = " where event_type_code = '" . $_GET['e'] . "'";
-  $conn = mysqli_connect('mysql.siteserver.net', 'ricksilva', 'xxxxxxx', 'xxxxxx');
-  if ($conn->connect_error) {
-    die("Connection failed: " . $conn->connect_error);
-  }
-  $sql = "SELECT event_id, event_type_code, start_date, short_desc, long_desc, event_url, location from events" . $sqldyn . " order by start_date desc";
-  $result = $conn->query($sql);
-
-  if ($result->num_rows > 0) {
-      while($row = $result->fetch_assoc()) {
-          echo "<div class=\"row\">";
-          echo "<div class=\"text-box col-md-offset-1 col-md-10>\"";
-          echo "<p><a href=\"/details.php?e=" . $row["event_id"] . "\">" . $row["short_desc"] . "</a>" . "<br>" . $row["location"] . "</p>";
-          echo "</div></div>";
-        }
-      } else {
-        echo "<div class=\"row\">";
-        echo "<div class=\"text-box col-md-offset-1 col-md-10>\"";
-        echo "<p>0 results" . "</p>";
-        echo "</div></div>";
-      }
-      $conn->close();
-}
+include_once "header.php";
 ?>
-<script src="js/jquery-1.11.2.min.js"></script>
-<script src="js/bootstrap.js"></script>
-<script src="js/jquery.main.js"></script>
+<div class="container">
+    <table class="table table-striped table-hover">
+        <?php if ($event_type != "") { ?>
+            <tr>
+                <th>Event</th>
+                <th>Location</th>
+                <th>Date</th>
+            </tr>
+        <?php } ?>
+        <?php
+        $sqldyn = "";
+        if ($event_type != "") {
+            if ($event_type == "A") { // A = All
+                $sqldyn = " ";
+            } else {
+                $sqldyn = " and event_type_code = '" . $event_type . "'";
+            }
+
+            $sql = "SELECT  event_id,
+                            event_type_code,
+                            date_format(start_date,'%m/%d/%Y') start_date,
+                            date_format(start_date,'%h:%i %p') start_time,
+                            short_desc,
+                            long_desc,
+                            event_url,
+                            location
+                            from events" .
+                " where start_date >= CURDATE()" .
+                $sqldyn .
+                " order by start_date";
+
+            $result = $conn->query($sql);
+
+
+            if ($result->num_rows > 0) {
+                while ($row = $result->fetch_assoc()) {
+                    if ($row[start_time] == '12:00 AM') {
+                        $display_date = $row[start_date];
+                    } else {
+                        $display_date = $row[start_date] . " " . $row[start_time];
+                    }
+
+                    echo "<tr><td>" . "<a href='details.php?event_type=" . $event_type . "&event_id=" . $row[event_id] . "'>" . $row[short_desc] . "</a></td>" .
+                        "<td>" . $row[location] . "</td>" .
+                        "<td>" . $display_date . "</td>" . "</tr>";
+
+                }
+            } else {
+                echo "<tr><td colspan='3' align='center'>No Results</td></tr>";
+            }
+            $conn->close();
+        } else {
+            ?>
+            <tr>
+                <td style="background-color: white;"><strong>1Church is a site where Christians in the Raleigh, North Carolina area can share church events with
+                    the rest of the community. Just Click a button above to see Christian events in your area of
+                    interest (Family, Finance, etc.)</strong>
+                </td>
+            </tr>
+            <?php
+        }
+        ?>
+    </table>
+</div>
+<script src="http://code.jquery.com/jquery-2.1.4.min.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
 </body>
 </html>
